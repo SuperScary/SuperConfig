@@ -24,7 +24,7 @@ public class Main {
 		System.out.println(mgr.load().timeout.get());
 		System.out.println(mgr.load().items.get().getLast());*/
 		Path cfgPath = Paths.get("hotswap");
-		ConfigManager<Config> mgr = new ConfigManager<>(Config.class, cfgPath, new YamlFormat());
+		ConfigManager<Config> mgr = new ConfigManager<>(Config.class, cfgPath, new TomlFormat());
 		Config cfg = mgr.load();
 		mgr.save(cfg);
 

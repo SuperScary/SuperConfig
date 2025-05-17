@@ -43,14 +43,11 @@ public class ConfigManager<T> {
 	/**
 	 * Load (or create) the config instance
 	 */
-	public T load () throws IOException {
+	public T load () throws IOException, IllegalAccessException {
 		T cfg = instantiate(type);
 		if (Files.exists(file)) {
-			// this will read the file and overwrite matching properties on your cfg instance
-			format
-					.getMapper()                    // expose your ObjectMapper
-					.readerForUpdating(cfg)
-					.readValue(file.toFile());
+			JsonNode root = format.readTree(file);
+			populate(cfg, root);    // your original method that handles ListValue, ConfigValue, nested @Config, etc.
 		}
 		return cfg;
 	}

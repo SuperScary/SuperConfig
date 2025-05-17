@@ -1,5 +1,6 @@
 package net.superscary.superconfig.format;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.superscary.superconfig.writer.ConfigWriter;
 
@@ -31,9 +32,11 @@ public interface ConfigFormat {
 	ObjectMapper getMapper ();
 
 	/**
-	 * @return the mime type for this format, e.g. "application/json" or "text/yaml"
+	 * @param file the file to read from
+	 * @return the {@link JsonNode} for this format. This is used to read and write config files.
+	 * @throws IOException if an I/O error occurs
 	 */
-	<T> T read (Path file, Class<T> type) throws IOException;
+	JsonNode readTree (Path file) throws IOException;
 
 	/**
 	 * @param file   the file to write to

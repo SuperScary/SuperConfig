@@ -1,7 +1,6 @@
 package net.superscary.superconfig.format.formats;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import net.superscary.superconfig.annotations.Comment;
 import net.superscary.superconfig.annotations.Config;
@@ -35,7 +34,15 @@ public class XmlFormat implements ConfigFormat {
 	/**
 	 * The default XML mapper. This is used to read and write XML files.
 	 */
-	private final ObjectMapper mapper = new XmlMapper().enable(SerializationFeature.INDENT_OUTPUT);
+	private final ObjectMapper mapper;
+
+	public XmlFormat () {
+		this.mapper = new XmlMapper()
+				.enable(SerializationFeature.INDENT_OUTPUT)
+				.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
+				.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS,     true)
+				.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+	}
 
 	/**
 	 * Returns the file extension for this format.
@@ -63,12 +70,9 @@ public class XmlFormat implements ConfigFormat {
 		return mapper;
 	}
 
-	/**
-	 * Allows reading an XML file into a Java object of the specified type.
-	 */
 	@Override
-	public <T> T read (Path file, Class<T> type) throws IOException {
-		return mapper.readValue(file.toFile(), type);
+	public JsonNode readTree (Path file) throws IOException {
+		return mapper.readTree(file.toFile());
 	}
 
 	/**

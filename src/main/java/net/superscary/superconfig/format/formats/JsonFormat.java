@@ -1,11 +1,9 @@
 package net.superscary.superconfig.format.formats;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import net.superscary.superconfig.annotations.Comment;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.databind.*;
 import net.superscary.superconfig.annotations.Config;
 import net.superscary.superconfig.format.ConfigFormat;
-import net.superscary.superconfig.writer.ConfigWriter;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -34,7 +32,17 @@ public class JsonFormat implements ConfigFormat {
 	/**
 	 * The default JSON mapper. This is used to read and write JSON files.
 	 */
-	private final ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+	private final ObjectMapper mapper;
+
+	public JsonFormat () {
+		JsonFactory factory = JsonFactory.builder().build();
+
+		this.mapper = new ObjectMapper(factory)
+				.enable(SerializationFeature.INDENT_OUTPUT)
+				.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
+				.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS,     true)
+				.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+	}
 
 	/**
 	 * Returns the file extension for this format.
@@ -57,12 +65,9 @@ public class JsonFormat implements ConfigFormat {
 		return mapper;
 	}
 
-	/**
-	 * Allows reading a JSON file into a Java object of the specified type.
-	 */
 	@Override
-	public <T> T read (Path file, Class<T> type) throws IOException {
-		return mapper.readValue(file.toFile(), type);
+	public JsonNode readTree (Path file) throws IOException {
+		return mapper.readTree(file.toFile());
 	}
 
 	/**
