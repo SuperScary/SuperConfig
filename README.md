@@ -1,9 +1,15 @@
-````markdown
 # SuperConfig
 
-[![License](https://img.shields.io/github/license/SuperScary/SuperConfig)](LICENSE)
+![GitHub License](https://img.shields.io/github/license/SuperScary/SuperConfig?style=for-the-badge)
+![Maven metadata URL](https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Frepo1.maven.org%2Fmaven2%2Fnet%2Fsuperscary%2FSuperConfig%2Fmaven-metadata.xml&style=for-the-badge)
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/SuperScary?style=for-the-badge)](https://github.com/sponsors/SuperScary)
 
-A drop-in, class-based configuration manager for Java projects. :contentReference[oaicite:0]{index=0}
+SuperConfig is a drop-in, class-based configuration manager for Java projects that lets you define your application’s 
+settings as plain Java classes—no XML, no boilerplate, no hand-rolled parsers. Simply annotate your classes with 
+`@ConfigContainer` and fields with `@Comment`, and SuperConfig automatically handles JSON serialization, deserialization, 
+default values, inline comments, and pretty-printed output. Under the hood it leverages Jackson for fast, reliable I/O, 
+and supports nested containers so you can group related settings into logical sub-classes. Whether you’re building a 
+small CLI tool or a large enterprise service, SuperConfig gives you a zero-hassle, human-friendly way to manage configuration.
 
 ---
 
@@ -182,6 +188,5 @@ Please follow the existing code style and include unit tests for new functionali
 
 This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
 
-```
-::contentReference[oaicite:1]{index=1}
-```
+[![forthebadge](https://forthebadge.com/images/featured/featured-built-with-love.svg)](https://forthebadge.com)
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/SuperScary)
