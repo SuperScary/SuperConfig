@@ -1,5 +1,6 @@
 package net.superscary.superconfig.tests;
 
+import net.superscary.superconfig.format.formats.*;
 import net.superscary.superconfig.manager.ConfigManager;
 import net.superscary.superconfig.tests.v0.Config;
 
@@ -22,8 +23,8 @@ public class Main {
 
 		System.out.println(mgr.load().timeout.get());
 		System.out.println(mgr.load().items.get().getLast());*/
-		Path cfgPath = Paths.get("hotswap.json5");
-		ConfigManager<Config> mgr = new ConfigManager<>(Config.class, cfgPath);
+		Path cfgPath = Paths.get("hotswap");
+		ConfigManager<Config> mgr = new ConfigManager<>(Config.class, cfgPath, new YamlFormat());
 		Config cfg = mgr.load();
 		mgr.save(cfg);
 

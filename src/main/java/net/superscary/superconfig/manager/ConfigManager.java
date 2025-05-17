@@ -1,12 +1,11 @@
 package net.superscary.superconfig.manager;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import net.superscary.superconfig.annotations.Comment;
 import net.superscary.superconfig.annotations.Config;
+import net.superscary.superconfig.format.ConfigFormat;
+import net.superscary.superconfig.format.formats.JsonFormat;
 import net.superscary.superconfig.value.AbstractValue;
 import net.superscary.superconfig.value.ConfigValue;
 import net.superscary.superconfig.value.wrappers.ListValue;
@@ -18,7 +17,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -27,34 +26,31 @@ import java.util.List;
 public class ConfigManager<T> {
 	private final Class<T> type;
 	private final Path file;
+	private final ConfigFormat format;
 	private final ObjectMapper mapper;
 
-	public ConfigManager (Class<T> type, Path file) {
+	public ConfigManager (Class<T> type, Path file, ConfigFormat fmt) {
 		this.type = type;
-		this.file = file;
+		this.file = ensureExtension(file, fmt.extension());
+		this.format = fmt;
+		this.mapper = fmt.getMapper();
+	}
 
-		// build a JsonFactory that accepts JSON5-style extensions
-		JsonFactory factory = JsonFactory.builder()
-				.enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)                // // and /*…*/
-				.enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)               // 'foo'
-				.enable(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES)        // foo: 1
-				.enable(JsonReadFeature.ALLOW_LEADING_ZEROS_FOR_NUMBERS)   // 007
-				.enable(JsonReadFeature.ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS) // .5
-				.enable(JsonReadFeature.ALLOW_TRAILING_COMMA)              // [1,2,]
-				.build();
-
-		this.mapper = new ObjectMapper(factory)
-				.enable(SerializationFeature.INDENT_OUTPUT);
+	public static <T> Builder<T> builder (Class<T> type) {
+		return new Builder<>(type);
 	}
 
 	/**
 	 * Load (or create) the config instance
 	 */
-	public T load () throws IOException, IllegalAccessException {
+	public T load () throws IOException {
 		T cfg = instantiate(type);
 		if (Files.exists(file)) {
-			JsonNode root = mapper.readTree(Files.newBufferedReader(file));
-			populate(cfg, root);
+			// this will read the file and overwrite matching properties on your cfg instance
+			format
+					.getMapper()                    // expose your ObjectMapper
+					.readerForUpdating(cfg)
+					.readValue(file.toFile());
 		}
 		return cfg;
 	}
@@ -62,12 +58,13 @@ public class ConfigManager<T> {
 	/**
 	 * Write out with comments
 	 */
-	public void save (T config) throws IOException, IllegalAccessException {
-		try (BufferedWriter w = Files.newBufferedWriter(file,
+	public void save (T config) throws IOException {
+		/*try (BufferedWriter w = Files.newBufferedWriter(file,
 				StandardOpenOption.CREATE,
 				StandardOpenOption.TRUNCATE_EXISTING)) {
 			writeObject(config, w, 0);
-		}
+		}*/
+		format.write(file, config, type);
 	}
 
 	// ——— Internals ———
@@ -134,8 +131,7 @@ public class ConfigManager<T> {
 						if (elNode.isValueNode()) {
 							// e.g. a plain number, string, boolean
 							element = mapper.treeToValue(elNode, elemType);
-						}
-						else if (elNode.isObject()) {
+						} else if (elNode.isObject()) {
 							// maybe old‐style wrapper object? try to pull "value" field
 							JsonNode valNode = elNode.get("value");
 							if (valNode != null && valNode.isValueNode()) {
@@ -144,8 +140,7 @@ public class ConfigManager<T> {
 								// last resort: try binding the whole object to elemType
 								element = mapper.convertValue(elNode, elemType);
 							}
-						}
-						else {
+						} else {
 							// arrays or other structures—let Jackson handle
 							element = mapper.convertValue(elNode, elemType);
 						}
@@ -211,101 +206,7 @@ public class ConfigManager<T> {
 		};
 	}
 
-	private void writeObject (Object obj, BufferedWriter w, int indent) throws IOException, IllegalAccessException {
-		indent(w, indent);
-		w.write("{");
-		w.newLine();
 
-		Field[] fields = obj.getClass().getDeclaredFields();
-		for (int i = 0; i < fields.length; i++) {
-			Field f = fields[i];
-			f.setAccessible(true);
-
-			String key = f.getName().toLowerCase();
-
-			// 1) Comments
-			Comment comment = f.getAnnotation(Comment.class);
-			if (comment != null) {
-				for (String line : comment.value()) {
-					indent(w, indent + 1);
-					w.write("// " + line);
-					w.newLine();
-				}
-			}
-
-			// 2) Nested @Config object?
-			if (f.getType().isAnnotationPresent(Config.class)) {
-				Object nested = f.get(obj);
-				if (nested == null) {
-					nested = instantiate(f.getType());
-					f.set(obj, nested);
-				}
-
-				indent(w, indent + 1);
-				w.write(key + ": ");
-				writeObject(nested, w, indent + 1);
-			}
-			// 3) Any ConfigValue<?> (including ListValue<T>, EnumValue<E>, etc.)
-			else if (ConfigValue.class.isAssignableFrom(f.getType())) {
-				@SuppressWarnings("unchecked")
-				ConfigValue<Object> cv = (ConfigValue<Object>) f.get(obj);
-				Object val = cv.get();
-
-				indent(w, indent + 1);
-				w.write(key + ": ");
-
-				if (val instanceof Collection<?> coll) {
-					// ---- WRITE A JSON5 ARRAY ----
-					w.write("[");
-					if (!coll.isEmpty()) {
-						w.newLine();
-						Iterator<?> it = coll.iterator();
-						while (it.hasNext()) {
-							Object element = it.next();
-							indent(w, indent + 2);
-
-							if (element != null && element.getClass().isAnnotationPresent(Config.class)) {
-								// element is a nested config object
-								writeObject(element, w, indent + 2);
-							} else {
-								// primitive / enum / simple object
-								String jsonElem = mapper.writeValueAsString(element);
-								w.write(jsonElem);
-							}
-
-							if (it.hasNext()) w.write(",");
-							w.newLine();
-						}
-						indent(w, indent + 1);
-					}
-					w.write("]");
-				} else {
-					// ---- WRITE A PRIMITIVE / STRING / ENUM ----
-					String json = mapper.writeValueAsString(val);
-					w.write(json);
-				}
-			}
-			// 4) Skip any other fields
-			else {
-				continue;
-			}
-
-			//Comma between fields
-			if (i < fields.length - 1) w.write(",");
-			w.newLine();
-		}
-
-		indent(w, indent);
-		w.write("}");
-		if (indent == 0) w.newLine();
-	}
-
-	/**
-	 * helper to indent
-	 */
-	private void indent (BufferedWriter w, int levels) throws IOException {
-		for (int i = 0; i < levels; i++) w.write("    ");
-	}
 
 	/**
 	 * Given a subclass of AbstractValue<X> (e.g. IntegerValue),
@@ -319,5 +220,50 @@ public class ConfigManager<T> {
 			if (t instanceof Class<?> c) return c;
 		}
 		throw new IllegalStateException("Cannot unwrap wrapper type " + wrapper);
+	}
+
+	private static Path ensureExtension (Path file, String ext) {
+		String name = file.getFileName().toString();
+		if (!name.endsWith(ext)) {
+			name = name + ext;
+		}
+		return (file.getParent() != null)
+				? file.getParent().resolve(name)
+				: Paths.get(name);
+	}
+
+	private void merge (T base, T override) throws IllegalAccessException {
+		for (Field f : type.getDeclaredFields()) {
+			f.setAccessible(true);
+			Object val = f.get(override);
+			if (val != null) {         // or more nuanced checks if you need primitives
+				f.set(base, val);
+			}
+		}
+	}
+
+	public static final class Builder<T> {
+		private final Class<T> type;
+		private Path file;
+		private ConfigFormat format = new JsonFormat();
+
+		private Builder (Class<T> type) {
+			this.type = type;
+		}
+
+		public Builder<T> file (Path file) {
+			this.file = file;
+			return this;
+		}
+
+		public Builder<T> format (ConfigFormat fmt) {
+			this.format = fmt;
+			return this;
+		}
+
+		public ConfigManager<T> build () {
+			if (file == null) throw new IllegalStateException("file not set");
+			return new ConfigManager<>(type, file, format);
+		}
 	}
 }
