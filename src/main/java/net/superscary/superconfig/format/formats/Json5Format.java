@@ -109,6 +109,9 @@ public class Json5Format implements ConfigFormat {
 		Field[] fields = obj.getClass().getDeclaredFields();
 		for (int i = 0; i < fields.length; i++) {
 			Field f = fields[i];
+
+			if (ignoreCheck(f)) continue;
+
 			f.setAccessible(true);
 
 			String key = f.getName().toLowerCase();

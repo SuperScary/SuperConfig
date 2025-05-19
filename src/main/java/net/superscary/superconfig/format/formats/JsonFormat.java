@@ -91,18 +91,10 @@ public class JsonFormat implements ConfigFormat {
 		Field[] fields = obj.getClass().getDeclaredFields();
 		for (int i = 0; i < fields.length; i++) {
 			Field f = fields[i];
-			f.setAccessible(true);
 
-			// 1) Emit @Comment lines
-			// Standard JSON does not support comments, but JSON5 does.
-			/*Comment comment = f.getAnnotation(Comment.class);
-			if (comment != null) {
-				for (String line : comment.value()) {
-					indent(w, indent + 1);
-					w.write(lineCommentPrefix() + line);
-					w.newLine();
-				}
-			}*/
+			if (ignoreCheck(f)) continue;
+
+			f.setAccessible(true);
 
 			String key = f.getName();
 			Object val = f.get(obj);

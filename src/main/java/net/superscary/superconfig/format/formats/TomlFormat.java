@@ -91,6 +91,9 @@ public class TomlFormat implements ConfigFormat {
 
 		// ── First pass: handle simple values & arrays ──
 		for (Field f : cls.getDeclaredFields()) {
+
+			if (ignoreCheck(f)) continue;
+
 			int mods = f.getModifiers();
 			if (Modifier.isStatic(mods) || Modifier.isTransient(mods) || f.isSynthetic()) {
 				continue;
@@ -182,6 +185,7 @@ public class TomlFormat implements ConfigFormat {
 		return v instanceof Number
 				|| v instanceof Boolean
 				|| v instanceof CharSequence
+				|| v instanceof Character
 				|| v.getClass().isEnum();
 	}
 
@@ -191,6 +195,11 @@ public class TomlFormat implements ConfigFormat {
 					.replace("\\", "\\\\")
 					.replace("\"", "\\\"");
 			return "\"" + s + "\"";
+		} else if (v instanceof Character) {
+			String s = v.toString()
+					.replace("\\", "\\\\")
+					.replace("\"", "\\\"");
+			return "'" + s + "'";
 		}
 		return v.toString();
 	}

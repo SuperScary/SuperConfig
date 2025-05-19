@@ -23,4 +23,5 @@ public abstract class AbstractValue<T> implements ConfigValue<T> {
 	public void set (T v) {
 		this.value = v;
 	}
+
 }

@@ -2,9 +2,11 @@ package net.superscary.superconfig.format;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.superscary.superconfig.annotations.Ignore;
 import net.superscary.superconfig.writer.ConfigWriter;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Path;
 
 /**
@@ -55,6 +57,10 @@ public interface ConfigFormat {
 	 */
 	default String lineCommentSuffix () {
 		return "";
+	}
+
+	default boolean ignoreCheck (Field field) {
+		return field.isAnnotationPresent(Ignore.class);
 	}
 
 }

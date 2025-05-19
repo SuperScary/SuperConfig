@@ -102,6 +102,9 @@ public class XmlFormat implements ConfigFormat {
 
 		// 2) Iterate only your config’s instance fields
 		for (Field f : obj.getClass().getDeclaredFields()) {
+
+			if (ignoreCheck(f)) continue;
+
 			int mods = f.getModifiers();
 			if (Modifier.isStatic(mods) || Modifier.isTransient(mods) || f.isSynthetic()) {
 				continue;

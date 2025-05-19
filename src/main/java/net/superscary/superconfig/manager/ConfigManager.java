@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.superscary.superconfig.annotations.Comment;
 import net.superscary.superconfig.annotations.Config;
+import net.superscary.superconfig.annotations.Ignore;
 import net.superscary.superconfig.format.ConfigFormat;
 import net.superscary.superconfig.format.formats.JsonFormat;
 import net.superscary.superconfig.value.AbstractValue;
@@ -76,6 +77,8 @@ public class ConfigManager<T> {
 
 	private void populate (Object obj, JsonNode node) throws IOException, IllegalAccessException {
 		for (Field f : obj.getClass().getDeclaredFields()) {
+			if (f.isAnnotationPresent(Ignore.class)) continue;
+
 			f.setAccessible(true);
 			String key = f.getName().toLowerCase();
 			JsonNode child = node.get(key);
@@ -165,7 +168,30 @@ public class ConfigManager<T> {
 				@SuppressWarnings("unchecked")
 				ConfigValue<Object> cv = (ConfigValue<Object>) f.get(obj);
 				if (child != null && !child.isNull()) {
-					Object v = mapper.treeToValue(child, inferGenericType(f));
+					// 1) unwrap any { "value": ... } wrapper
+					JsonNode valNode = child;
+					if (valNode.isObject() && valNode.has("value")) {
+						valNode = valNode.get("value");
+					}
+
+					// 2) figure out the target type (e.g. Character.class)
+					Class<?> tgt = inferGenericType(f);
+					Object v;
+
+					// 3) special case char from a String node
+					if (tgt == Character.class && valNode.isTextual()) {
+						String s = valNode.textValue();
+						v = s.isEmpty() ? '\0' : s.charAt(0);
+					}
+					// 4) any other simple value node
+					else if (valNode.isValueNode()) {
+						v = mapper.treeToValue(valNode, tgt);
+					}
+					// 5) fallback for weird cases
+					else {
+						v = mapper.convertValue(valNode, tgt);
+					}
+
 					cv.set(v);
 				}
 			}
@@ -199,11 +225,10 @@ public class ConfigManager<T> {
 			case "FloatValue" -> Float.class;
 			case "ShortValue" -> Short.class;
 			case "ByteValue" -> Byte.class;
+			case "CharValue" -> Character.class;
 			default -> throw new IllegalStateException("Unknown ConfigValue type " + f.getType().getSimpleName());
 		};
 	}
-
-
 
 	/**
 	 * Given a subclass of AbstractValue<X> (e.g. IntegerValue),

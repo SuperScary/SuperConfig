@@ -84,6 +84,9 @@ public class YamlFormat implements ConfigFormat {
 	private void writeYamlMapping (Object obj, BufferedWriter w, int indent)
 			throws IOException, IllegalAccessException {
 		for (Field f : obj.getClass().getDeclaredFields()) {
+
+			if (ignoreCheck(f)) continue;
+
 			int mods = f.getModifiers();
 			// ← SKIP any static, transient or compiler‐generated fields
 			if (Modifier.isStatic(mods) || Modifier.isTransient(mods) || f.isSynthetic()) {
@@ -145,14 +148,16 @@ public class YamlFormat implements ConfigFormat {
 		return v instanceof Number
 				|| v instanceof Boolean
 				|| v instanceof CharSequence
+				|| v instanceof Character
 				|| v.getClass().isEnum();
 	}
 
-	private String scalarToString (Object v) {
+	private String scalarToString(Object v) {
 		String s = v.toString();
 		if (v instanceof CharSequence) {
-			// wrap strings in quotes, escaping internal quotes
 			s = "\"" + s.replace("\"", "\\\"") + "\"";
+		} else if (v instanceof Character) {
+			s = "'" + s.replace("'", "\\'") + "'";
 		}
 		return s;
 	}
