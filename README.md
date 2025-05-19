@@ -119,8 +119,8 @@ public class Main {
             .format(new YamlFormat())
             .build();
         
-        // TOML, XML, BSON or KDL similarly:
-        // .format(new TomlFormat()), new XmlFormat(), new BsonFormat(), new KdlFormat()
+        // TOML or XML similarly:
+        // .format(new TomlFormat()), new XmlFormat(), etc.
 
         ServerConfig cfg = yamlMgr.load();    // loads defaults + merges existing
         cfg.verbose.set(true);
@@ -222,5 +222,5 @@ Please follow code style and add tests for new features.
 
 This project is MIT-licensed. See the [LICENSE](LICENSE) file for details.
 
-[![Built with ♥](https://forthebadge.com/images/featured/featured-built-with-love.svg)](https://forthebadge.com)
+[![Built with ♥](https://forthebadge.com/images/featured/featured-built-with-love.svg)](https://github.com/sponsors/SuperScary)
 
