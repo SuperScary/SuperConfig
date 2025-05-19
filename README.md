@@ -1,14 +1,14 @@
 # SuperConfig
 
-![GitHub License](https://img.shields.io/github/license/SuperScary/SuperConfig?style=for-the-badge)  
-![Maven metadata](https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Frepo1.maven.org%2Fmaven2%2Fnet%2Fsuperscary%2FSuperConfig%2Fmaven-metadata.xml&style=for-the-badge)  
+![GitHub License](https://img.shields.io/github/license/SuperScary/SuperConfig?style=for-the-badge)
+![Maven metadata](https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Frepo1.maven.org%2Fmaven2%2Fnet%2Fsuperscary%2FSuperConfig%2Fmaven-metadata.xml&style=for-the-badge)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/SuperScary?style=for-the-badge)](https://github.com/sponsors/SuperScary)
 
-> A **drop-in**, **class-based** configuration manager for Java — JSON, YAML, TOML, XML, BSON & KDL supported out of the box.
+> A **drop-in**, **class-based** configuration manager for Java — JSON, JSON5, YAML, TOML, and XML.
 
 SuperConfig lets you define your app’s settings as plain Java classes—no XML schemas, no boilerplate, no hand-rolled parsers.  
 Annotate with `@ConfigContainer`, use `@Comment` for inline docs, `@Ignore` to skip fields, or value–wrappers like `CharValue`.  
-Under the hood each format ships its own Jackson mapper (or kdl4j parser), so you get human-friendly files and zero surprises.
+Under the hood each format ships its own Jackson mapper, so you get human-friendly files and zero surprises.
 
 ---
 
