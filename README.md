@@ -82,7 +82,7 @@ import net.superscary.superconfig.annotations.*;
 import net.superscary.superconfig.value.wrappers.BooleanValue;
 import net.superscary.superconfig.value.wrappers.IntegerValue;
 
-@ConfigContainer
+@Config(name = "server_config")
 public class ServerConfig {
   @Comment("Server port")
   public IntegerValue port = new IntegerValue(8080);
@@ -141,7 +141,7 @@ public class Main {
 ### Nested Containers
 
 ```java
-@ConfigContainer
+@Config(name = "app_config")
 public class AppConfig {
     @ConfigContainer
     public static class Db {
