@@ -1,7 +1,6 @@
 package net.superscary.superconfig;
 
 import net.superscary.superconfig.factory.ConfigFactory;
-import net.superscary.superconfig.format.formats.Json5Format;
 import net.superscary.superconfig.format.formats.JsonFormat;
 import net.superscary.superconfig.manager.ConfigManager;
 import org.junit.jupiter.api.BeforeEach;

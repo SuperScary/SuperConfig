@@ -13,7 +13,6 @@ target/
 *.ipr
 .idea
 .mvn
-pom.xml
 *.json5
 
 ### Eclipse ###
