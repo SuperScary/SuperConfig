@@ -19,7 +19,8 @@ import java.util.Collection;
  * YAML config format using Jackson.
  * <p>
  * This format uses the Jackson library to read and write YAML files. It supports comments and
- * other YAML-style extensions.
+ * other YAML-style extensions. The format is configured to be case-insensitive for properties
+ * and enums, and to ignore unknown properties.
  * </p>
  *
  * @author SuperScary
@@ -31,48 +32,97 @@ import java.util.Collection;
 public class YamlFormat implements ConfigFormat {
 	/**
 	 * The default YAML mapper. This is used to read and write YAML files.
+	 * <p>
+	 * The mapper is configured with the following settings:
+	 * - Indented output for better readability
+	 * - Case-insensitive property matching
+	 * - Case-insensitive enum matching
+	 * - Ignore unknown properties
+	 * </p>
 	 */
 	private final ObjectMapper mapper;
 
-	public YamlFormat () {
+	/**
+	 * Creates a new YamlFormat with default settings.
+	 * <p>
+	 * The ObjectMapper is configured with standard settings for YAML processing,
+	 * including support for comments and other YAML features.
+	 * </p>
+	 */
+	public YamlFormat() {
 		this.mapper = new ObjectMapper(new YAMLFactory())
 				.enable(SerializationFeature.INDENT_OUTPUT)
 				.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
-				.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS,     true)
+				.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true)
 				.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 	}
 
 	/**
 	 * Returns the file extension for this format.
+	 * <p>
+	 * The extension is ".yml" for YAML files.
+	 * </p>
+	 *
+	 * @return the file extension
 	 */
 	@Override
-	public String extension () {
+	public String extension() {
 		return ".yml";
 	}
 
+	/**
+	 * Returns the line comment prefix for this format.
+	 * <p>
+	 * YAML comments use "# " as the prefix.
+	 * </p>
+	 *
+	 * @return the comment prefix
+	 */
 	@Override
-	public String lineCommentPrefix () {
+	public String lineCommentPrefix() {
 		return "# ";
 	}
 
 	/**
-	 * Returns the default YAML mapper. This is used to read and write JSON files.
+	 * Returns the default YAML mapper.
+	 * <p>
+	 * This mapper is used to read and write YAML files with the configured settings.
+	 * </p>
+	 *
+	 * @return the ObjectMapper instance
 	 */
 	@Override
-	public ObjectMapper getMapper () {
+	public ObjectMapper getMapper() {
 		return mapper;
 	}
 
+	/**
+	 * Reads a YAML file and returns its contents as a JsonNode.
+	 *
+	 * @param file the file to read from
+	 * @return the JsonNode representing the file contents
+	 * @throws IOException if an I/O error occurs
+	 */
 	@Override
-	public JsonNode readTree (Path file) throws IOException {
+	public JsonNode readTree(Path file) throws IOException {
 		return mapper.readTree(file.toFile());
 	}
 
 	/**
-	 * Allows writing a Java object to a YAML file.
+	 * Writes a configuration object to a YAML file.
+	 * <p>
+	 * This method handles the serialization of the config object to YAML format,
+	 * including proper indentation and formatting.
+	 * </p>
+	 *
+	 * @param file   the file to write to
+	 * @param config the config object to write
+	 * @param writer the class of the config object
+	 * @param <T>    the type of the config object
+	 * @throws IOException if an I/O error occurs
 	 */
 	@Override
-	public <T> void write (Path file, T config, Class<T> writer) throws IOException {
+	public <T> void write(Path file, T config, Class<T> writer) throws IOException {
 		try (BufferedWriter w = Files.newBufferedWriter(file,
 				StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
 			writeYamlMapping(config, w, 0);
@@ -81,14 +131,13 @@ public class YamlFormat implements ConfigFormat {
 		}
 	}
 
-	private void writeYamlMapping (Object obj, BufferedWriter w, int indent)
+	private void writeYamlMapping(Object obj, BufferedWriter w, int indent)
 			throws IOException, IllegalAccessException {
 		for (Field f : obj.getClass().getDeclaredFields()) {
 
 			if (ignoreCheck(f)) continue;
 
 			int mods = f.getModifiers();
-			// ← SKIP any static, transient or compiler‐generated fields
 			if (Modifier.isStatic(mods) || Modifier.isTransient(mods) || f.isSynthetic()) {
 				continue;
 			}
@@ -96,14 +145,12 @@ public class YamlFormat implements ConfigFormat {
 			f.setAccessible(true);
 			Object raw = f.get(obj);
 
-			// unwrap ConfigValue<T> if you use it
 			if (raw instanceof ConfigValue<?> cv) {
 				raw = cv.get();
 			}
 
 			String key = f.getName().toLowerCase();
 
-			// 1) field-level comments
 			Comment comment = f.getAnnotation(Comment.class);
 			if (comment != null) {
 				for (String line : comment.value()) {
@@ -113,7 +160,6 @@ public class YamlFormat implements ConfigFormat {
 				}
 			}
 
-			// 2) null → "key: null"
 			indent(w, indent);
 			w.write(key + ":");
 			if (raw == null) {
@@ -122,12 +168,10 @@ public class YamlFormat implements ConfigFormat {
 				continue;
 			}
 
-			// 3) simple scalars
 			if (isScalar(raw)) {
 				w.write(" " + scalarToString(raw));
 				w.newLine();
 			}
-			// 4) collections → sequence block
 			else if (raw instanceof Collection<?> coll) {
 				w.newLine();
 				for (Object e : coll) {
@@ -136,7 +180,6 @@ public class YamlFormat implements ConfigFormat {
 					w.newLine();
 				}
 			}
-			// 5) nested container → recurse
 			else {
 				w.newLine();
 				writeYamlMapping(raw, w, indent + 2);
@@ -144,7 +187,7 @@ public class YamlFormat implements ConfigFormat {
 		}
 	}
 
-	private boolean isScalar (Object v) {
+	private boolean isScalar(Object v) {
 		return v instanceof Number
 				|| v instanceof Boolean
 				|| v instanceof CharSequence
@@ -162,7 +205,7 @@ public class YamlFormat implements ConfigFormat {
 		return s;
 	}
 
-	private void indent (BufferedWriter w, int levels) throws IOException {
+	private void indent(BufferedWriter w, int levels) throws IOException {
 		for (int i = 0; i < levels; i++) {
 			w.write(" ");
 		}

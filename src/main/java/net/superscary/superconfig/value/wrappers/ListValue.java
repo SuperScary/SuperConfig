@@ -7,46 +7,101 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * A ConfigValue that holds a List of T.
+ * Wrapper for list values in a configuration.
+ * <p>
+ * This class provides a type-safe way to store and retrieve list values in a configuration.
+ * It supports all list types and provides methods for getting and setting list values.
+ * </p>
+ * <p>
+ * Example usage:
+ * <pre>
+ * {@code
+ * @Config(name = "example")
+ * public class ExampleConfig {
+ *     public ListValue<String> myList = new ListValue<>(Arrays.asList("item1", "item2"));
+ * }
+ * }
+ * </pre>
+ *
+ * @param <E> the type of elements in the list
+ * @author SuperScary
+ * @since 1.0.0
  */
-public class ListValue<T> extends AbstractValue<List<T>> {
+public class ListValue<E> extends AbstractValue<List<E>> {
 
 	/**
-	 * @param defaultList the default contents (will be copied internally)
+	 * Creates a new ListValue with the given default value.
+	 *
+	 * @param defaultValue the default value
 	 */
-	public ListValue(List<T> defaultList) {
-		super(new ArrayList<>(defaultList));
+	public ListValue(List<E> defaultValue) {
+		super(defaultValue);
 	}
 
+	/**
+	 * Creates a new ListValue with no default value.
+	 */
+	public ListValue() {
+		super(null);
+	}
+
+	/**
+	 * Gets the current list value.
+	 * <p>
+	 * Returns the live list so callers can modify it directly.
+	 * </p>
+	 *
+	 * @return the current list value
+	 */
 	@Override
-	public List<T> get() {
-		// return the live list so callers can mutate it if desired
+	public List<E> get() {
 		return super.get();
 	}
 
+	/**
+	 * Sets a new list value.
+	 * <p>
+	 * The new list is copied internally to prevent external modification.
+	 * </p>
+	 *
+	 * @param newValue the new list value
+	 */
 	@Override
-	public void set(List<T> newValue) {
-		// copy to avoid external aliasing
+	public void set(List<E> newValue) {
 		super.set(new ArrayList<>(newValue));
 	}
 
-	/** convenience: add an element */
-	public void add(T element) {
+	/**
+	 * Adds an element to the list.
+	 *
+	 * @param element the element to add
+	 */
+	public void add(E element) {
 		get().add(element);
 	}
 
-	/** convenience: remove an element */
-	public void remove(T element) {
+	/**
+	 * Removes an element from the list.
+	 *
+	 * @param element the element to remove
+	 */
+	public void remove(E element) {
 		get().remove(element);
 	}
 
-	/** convenience: clear the list */
+	/**
+	 * Removes all elements from the list.
+	 */
 	public void clear() {
 		get().clear();
 	}
 
-	/** convenience: addAll */
-	public void addAll(Collection<? extends T> c) {
+	/**
+	 * Adds all elements from a collection to the list.
+	 *
+	 * @param c the collection containing elements to add
+	 */
+	public void addAll(Collection<? extends E> c) {
 		get().addAll(c);
 	}
 }

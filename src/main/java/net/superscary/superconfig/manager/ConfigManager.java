@@ -2,7 +2,6 @@ package net.superscary.superconfig.manager;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.superscary.superconfig.annotations.Comment;
 import net.superscary.superconfig.annotations.Config;
 import net.superscary.superconfig.annotations.Ignore;
 import net.superscary.superconfig.format.ConfigFormat;
@@ -11,7 +10,6 @@ import net.superscary.superconfig.value.AbstractValue;
 import net.superscary.superconfig.value.ConfigValue;
 import net.superscary.superconfig.value.wrappers.ListValue;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -20,54 +18,113 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
+/**
+ * Manages the loading and saving of configuration objects.
+ * <p>
+ * This class provides functionality to load configuration objects from files and save them back
+ * to disk. It supports various file formats through the {@link ConfigFormat} interface and
+ * handles the serialization and deserialization of configuration objects.
+ * </p>
+ *
+ * @param <T> the type of configuration object this manager handles
+ * @author SuperScary
+ * @see net.superscary.superconfig.format.ConfigFormat
+ * @see net.superscary.superconfig.annotations.Config
+ * @since 1.0.0
+ */
 public class ConfigManager<T> {
+	/**
+	 * The class type of the configuration object.
+	 */
 	private final Class<T> type;
+
+	/**
+	 * The file path where the configuration is stored.
+	 */
 	private final Path file;
+
+	/**
+	 * The format used for reading and writing the configuration.
+	 */
 	private final ConfigFormat format;
+
+	/**
+	 * The ObjectMapper used for serialization and deserialization.
+	 */
 	private final ObjectMapper mapper;
 
-	public ConfigManager (Class<T> type, Path file, ConfigFormat fmt) {
+	/**
+	 * Creates a new ConfigManager with the specified type, file, and format.
+	 *
+	 * @param type   the class type of the configuration object
+	 * @param file   the file path where the configuration is stored
+	 * @param fmt    the format to use for reading and writing
+	 */
+	public ConfigManager(Class<T> type, Path file, ConfigFormat fmt) {
 		this.type = type;
 		this.file = ensureExtension(file, fmt.extension());
 		this.format = fmt;
 		this.mapper = fmt.getMapper();
 	}
 
-	public static <T> Builder<T> builder (Class<T> type) {
+	/**
+	 * Creates a new builder for constructing a ConfigManager.
+	 *
+	 * @param type the class type of the configuration object
+	 * @param <T>  the type of configuration object
+	 * @return a new builder instance
+	 */
+	public static <T> Builder<T> builder(Class<T> type) {
 		return new Builder<>(type);
 	}
 
 	/**
-	 * Load (or create) the config instance
+	 * Loads (or creates) the configuration instance.
+	 * <p>
+	 * If the configuration file exists, it will be loaded and merged with default values.
+	 * If the file doesn't exist, a new instance will be created with default values.
+	 * </p>
+	 *
+	 * @return the populated configuration instance
+	 * @throws IOException            if an I/O error occurs
+	 * @throws IllegalAccessException if the object is not accessible
 	 */
-	public T load () throws IOException, IllegalAccessException {
+	public T load() throws IOException, IllegalAccessException {
 		T cfg = instantiate(type);
 		if (Files.exists(file)) {
 			JsonNode root = format.readTree(file);
-			populate(cfg, root);    // your original method that handles ListValue, ConfigValue, nested @Config, etc.
+			populate(cfg, root);
 		}
 		return cfg;
 	}
 
 	/**
-	 * Write out with comments
+	 * Saves the configuration object to disk.
+	 * <p>
+	 * The configuration will be written to the file specified in the constructor,
+	 * using the format specified in the constructor.
+	 * </p>
+	 *
+	 * @param config the configuration object to save
+	 * @throws IOException if an I/O error occurs
 	 */
-	public void save (T config) throws IOException {
-		/*try (BufferedWriter w = Files.newBufferedWriter(file,
-				StandardOpenOption.CREATE,
-				StandardOpenOption.TRUNCATE_EXISTING)) {
-			writeObject(config, w, 0);
-		}*/
+	public void save(T config) throws IOException {
 		format.write(file, config, type);
 	}
 
 	// ——— Internals ———
 
-	private <U> U instantiate (Class<U> cls) {
+	/**
+	 * Creates a new instance of the specified class.
+	 *
+	 * @param cls the class to instantiate
+	 * @param <U> the type of the class
+	 * @return a new instance of the class
+	 * @throws IllegalStateException if instantiation fails
+	 */
+	private <U> U instantiate(Class<U> cls) {
 		try {
 			return cls.getDeclaredConstructor().newInstance();
 		} catch (ReflectiveOperationException e) {
@@ -75,7 +132,21 @@ public class ConfigManager<T> {
 		}
 	}
 
-	private void populate (Object obj, JsonNode node) throws IOException, IllegalAccessException {
+	/**
+	 * Populates a configuration object with values from a JsonNode.
+	 * <p>
+	 * This method handles various types of fields:
+	 * - Nested @Config objects
+	 * - ListValue fields
+	 * - Scalar ConfigValue fields
+	 * </p>
+	 *
+	 * @param obj  the object to populate
+	 * @param node the JsonNode containing the values
+	 * @throws IOException            if an I/O error occurs
+	 * @throws IllegalAccessException if the object is not accessible
+	 */
+	private void populate(Object obj, JsonNode node) throws IOException, IllegalAccessException {
 		for (Field f : obj.getClass().getDeclaredFields()) {
 			if (f.isAnnotationPresent(Ignore.class)) continue;
 
@@ -83,7 +154,6 @@ public class ConfigManager<T> {
 			String key = f.getName().toLowerCase();
 			JsonNode child = node.get(key);
 
-			// 1) Nested @Config objects
 			if (f.getType().isAnnotationPresent(Config.class)) {
 				Object nested = f.get(obj);
 				if (nested == null) {
@@ -96,11 +166,9 @@ public class ConfigManager<T> {
 				continue;
 			}
 
-			// 2) ListValue<T>
 			if (ListValue.class.isAssignableFrom(f.getType())) {
 				if (child == null || !child.isArray()) continue;
 
-				// 1) figure out declared T in ListValue<T>
 				Type gt = f.getGenericType();
 				if (!(gt instanceof ParameterizedType pt)) {
 					throw new IOException("Missing generic type for ListValue on field " + f.getName());
@@ -110,38 +178,29 @@ public class ConfigManager<T> {
 					throw new IOException("Cannot handle generic type " + arg + " on field " + f.getName());
 				}
 
-				// 2) unwrap wrappers like IntegerValue → Integer.class
 				Class<?> elemType = declaredElem;
 				if (ConfigValue.class.isAssignableFrom(declaredElem)) {
 					elemType = unwrapValueType(declaredElem);
 				}
 
-				// 3) build the list manually, element by element
 				List<Object> built = new ArrayList<>();
 				for (JsonNode elNode : child) {
 					Object element;
 
-					// 3a) nested @Config object?
 					if (elemType.isAnnotationPresent(Config.class)) {
 						element = instantiate(elemType);
 						populate(element, elNode);
-					}
-					// 3b) primitive / enum / POJO
-					else {
+					} else {
 						if (elNode.isValueNode()) {
-							// e.g. a plain number, string, boolean
 							element = mapper.treeToValue(elNode, elemType);
 						} else if (elNode.isObject()) {
-							// maybe old‐style wrapper object? try to pull "value" field
 							JsonNode valNode = elNode.get("value");
 							if (valNode != null && valNode.isValueNode()) {
 								element = mapper.treeToValue(valNode, elemType);
 							} else {
-								// last resort: try binding the whole object to elemType
 								element = mapper.convertValue(elNode, elemType);
 							}
 						} else {
-							// arrays or other structures—let Jackson handle
 							element = mapper.convertValue(elNode, elemType);
 						}
 					}
@@ -149,7 +208,6 @@ public class ConfigManager<T> {
 					built.add(element);
 				}
 
-				// 4) set on your ListValue instance
 				Object raw = f.get(obj);
 				if (raw instanceof ListValue<?> lv) {
 					@SuppressWarnings("unchecked")
@@ -163,31 +221,25 @@ public class ConfigManager<T> {
 				continue;
 			}
 
-			// 3) Scalar ConfigValue<V>
 			if (ConfigValue.class.isAssignableFrom(f.getType())) {
 				@SuppressWarnings("unchecked")
 				ConfigValue<Object> cv = (ConfigValue<Object>) f.get(obj);
 				if (child != null && !child.isNull()) {
-					// 1) unwrap any { "value": ... } wrapper
 					JsonNode valNode = child;
 					if (valNode.isObject() && valNode.has("value")) {
 						valNode = valNode.get("value");
 					}
 
-					// 2) figure out the target type (e.g. Character.class)
 					Class<?> tgt = inferGenericType(f);
 					Object v;
 
-					// 3) special case char from a String node
 					if (tgt == Character.class && valNode.isTextual()) {
 						String s = valNode.textValue();
 						v = s.isEmpty() ? '\0' : s.charAt(0);
 					}
-					// 4) any other simple value node
 					else if (valNode.isValueNode()) {
 						v = mapper.treeToValue(valNode, tgt);
 					}
-					// 5) fallback for weird cases
 					else {
 						v = mapper.convertValue(valNode, tgt);
 					}
@@ -198,24 +250,31 @@ public class ConfigManager<T> {
 		}
 	}
 
-	private Class<?> inferGenericType (Field f) {
-		// 1) if it's parameterized (e.g. EnumValue<MyMode>, ListValue<String>, etc.)
+	/**
+	 * Infers the generic type of a field.
+	 * <p>
+	 * This method is used to determine the target type for deserialization
+	 * of ConfigValue fields.
+	 * </p>
+	 *
+	 * @param f the field to infer the type for
+	 * @return the inferred type
+	 * @throws IllegalStateException if the type cannot be inferred
+	 */
+	private Class<?> inferGenericType(Field f) {
 		Type gt = f.getGenericType();
 		if (gt instanceof ParameterizedType pt) {
 			Type[] args = pt.getActualTypeArguments();
 			if (args.length == 1 && args[0] instanceof Class<?> argClass) {
-				// Enum support
 				if (Enum.class.isAssignableFrom(argClass)) {
 					@SuppressWarnings("unchecked")
 					Class<? extends Enum<?>> enumType = (Class<? extends Enum<?>>) argClass;
 					return enumType;
 				}
-				// primitive wrappers or String
 				return argClass;
 			}
 		}
 
-		// 2) fallback on field type name (if you still have non-generic ConfigValue subclasses)
 		return switch (f.getType().getSimpleName()) {
 			case "BooleanValue" -> Boolean.class;
 			case "IntegerValue" -> Integer.class;
@@ -231,10 +290,16 @@ public class ConfigManager<T> {
 	}
 
 	/**
-	 * Given a subclass of AbstractValue<X> (e.g. IntegerValue),
-	 * pull out that X (Integer.class).
+	 * Unwraps a ConfigValue type to get its underlying value type.
+	 * <p>
+	 * For example, IntegerValue -> Integer.class
+	 * </p>
+	 *
+	 * @param wrapper the wrapper type to unwrap
+	 * @return the unwrapped type
+	 * @throws IllegalStateException if the type cannot be unwrapped
 	 */
-	private Class<?> unwrapValueType (Class<?> wrapper) {
+	private Class<?> unwrapValueType(Class<?> wrapper) {
 		Type sup = wrapper.getGenericSuperclass();
 		if (sup instanceof ParameterizedType pt
 				&& pt.getRawType() == AbstractValue.class) {
@@ -244,7 +309,14 @@ public class ConfigManager<T> {
 		throw new IllegalStateException("Cannot unwrap wrapper type " + wrapper);
 	}
 
-	private static Path ensureExtension (Path file, String ext) {
+	/**
+	 * Ensures a file path has the correct extension.
+	 *
+	 * @param file the file path to check
+	 * @param ext  the extension to ensure
+	 * @return the file path with the correct extension
+	 */
+	private static Path ensureExtension(Path file, String ext) {
 		String name = file.getFileName().toString();
 		if (!name.endsWith(ext)) {
 			name = name + ext;
@@ -254,36 +326,69 @@ public class ConfigManager<T> {
 				: Paths.get(name);
 	}
 
-	private void merge (T base, T override) throws IllegalAccessException {
+	/**
+	 * Merges two configuration objects.
+	 * <p>
+	 * Values from the override object take precedence over values in the base object.
+	 * </p>
+	 *
+	 * @param base     the base configuration object
+	 * @param override the override configuration object
+	 * @throws IllegalAccessException if the objects are not accessible
+	 */
+	private void merge(T base, T override) throws IllegalAccessException {
 		for (Field f : type.getDeclaredFields()) {
 			f.setAccessible(true);
 			Object val = f.get(override);
-			if (val != null) {         // or more nuanced checks if you need primitives
+			if (val != null) {
 				f.set(base, val);
 			}
 		}
 	}
 
+	/**
+	 * Builder for constructing ConfigManager instances.
+	 *
+	 * @param <T> the type of configuration object
+	 */
 	public static final class Builder<T> {
 		private final Class<T> type;
 		private Path file;
 		private ConfigFormat format = new JsonFormat();
 
-		private Builder (Class<T> type) {
+		private Builder(Class<T> type) {
 			this.type = type;
 		}
 
-		public Builder<T> file (Path file) {
+		/**
+		 * Sets the file path for the configuration.
+		 *
+		 * @param file the file path
+		 * @return this builder
+		 */
+		public Builder<T> file(Path file) {
 			this.file = file;
 			return this;
 		}
 
-		public Builder<T> format (ConfigFormat fmt) {
+		/**
+		 * Sets the format for the configuration.
+		 *
+		 * @param fmt the format to use
+		 * @return this builder
+		 */
+		public Builder<T> format(ConfigFormat fmt) {
 			this.format = fmt;
 			return this;
 		}
 
-		public ConfigManager<T> build () {
+		/**
+		 * Builds a new ConfigManager instance.
+		 *
+		 * @return a new ConfigManager
+		 * @throws IllegalStateException if the file path is not set
+		 */
+		public ConfigManager<T> build() {
 			if (file == null) throw new IllegalStateException("file not set");
 			return new ConfigManager<>(type, file, format);
 		}

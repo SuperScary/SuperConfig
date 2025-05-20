@@ -18,10 +18,9 @@ import java.util.Collection;
 
 /**
  * XML config format using Jackson.
- * <p>
  * This format uses the Jackson library to read and write XML files. It supports comments and
- * other XML-style extensions.
- * </p>
+ * other XML-style extensions. The format is configured to be case-insensitive for properties
+ * and enums, and to ignore unknown properties.
  *
  * @author SuperScary
  * @see net.superscary.superconfig.manager.ConfigManager
@@ -33,60 +32,101 @@ public class XmlFormat implements ConfigFormat {
 
 	/**
 	 * The default XML mapper. This is used to read and write XML files.
+	 * The mapper is configured with the following settings:
+	 * - Indented output for better readability
+	 * - Case-insensitive property matching
+	 * - Case-insensitive enum matching
+	 * - Ignore unknown properties
 	 */
 	private final ObjectMapper mapper;
 
-	public XmlFormat () {
+	/**
+	 * Creates a new XmlFormat with default settings.
+	 * The ObjectMapper is configured with standard settings for XML processing,
+	 * including support for comments and other XML features.
+	 */
+	public XmlFormat() {
 		this.mapper = new XmlMapper()
 				.enable(SerializationFeature.INDENT_OUTPUT)
 				.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
-				.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS,     true)
+				.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true)
 				.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 	}
 
 	/**
 	 * Returns the file extension for this format.
+	 * The extension is ".xml" for XML files.
+	 *
+	 * @return the file extension
 	 */
 	@Override
-	public String extension () {
+	public String extension() {
 		return ".xml";
 	}
 
+	/**
+	 * Returns the line comment prefix for this format.
+	 *
+	 * @return the comment prefix
+	 */
 	@Override
-	public String lineCommentPrefix () {
+	public String lineCommentPrefix() {
 		return "<!-- ";
 	}
 
+	/**
+	 * Returns the line comment suffix for this format.
+	 * XML comments use " -->" as the suffix.
+	 *
+	 * @return the comment suffix
+	 */
 	@Override
-	public String lineCommentSuffix () {
+	public String lineCommentSuffix() {
 		return " -->";
 	}
 
 	/**
-	 * Returns the default XML mapper. This is used to read and write JSON files.
+	 * Returns the default XML mapper.
+	 * This mapper is used to read and write XML files with the configured settings.
+	 *
+	 * @return the ObjectMapper instance
 	 */
 	@Override
-	public ObjectMapper getMapper () {
+	public ObjectMapper getMapper() {
 		return mapper;
 	}
 
+	/**
+	 * Reads an XML file and returns its contents as a JsonNode.
+	 *
+	 * @param file the file to read from
+	 * @return the JsonNode representing the file contents
+	 * @throws IOException if an I/O error occurs
+	 */
 	@Override
-	public JsonNode readTree (Path file) throws IOException {
+	public JsonNode readTree(Path file) throws IOException {
 		return mapper.readTree(file.toFile());
 	}
 
 	/**
-	 * Allows writing a Java object to an XML file.
+	 * Writes a configuration object to an XML file.
+	 * This method handles the serialization of the config object to XML format,
+	 * including proper indentation, formatting, and XML prologue.
+	 *
+	 * @param file   the file to write to
+	 * @param config the config object to write
+	 * @param writer the class of the config object
+	 * @param <T>    the type of the config object
+	 * @throws IOException if an I/O error occurs
 	 */
 	@Override
-	public <T> void write (Path file, T config, Class<T> writer) throws IOException {
+	public <T> void write(Path file, T config, Class<T> writer) throws IOException {
 		try (BufferedWriter w = Files.newBufferedWriter(file,
 				StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
 			// XML prologue
 			w.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 			w.newLine();
 
-			// root element named after the class
 			writeXmlElement(config, w, 0, writer.getSimpleName().toLowerCase());
 		} catch (IllegalAccessException e) {
 			throw new RuntimeException(e);
@@ -95,12 +135,10 @@ public class XmlFormat implements ConfigFormat {
 
 	private void writeXmlElement(Object obj, BufferedWriter w, int indent, String elementName)
 			throws IOException, IllegalAccessException {
-		// 1) Open this element
 		indent(w, indent);
 		w.write("<" + elementName + ">");
 		w.newLine();
 
-		// 2) Iterate only your config’s instance fields
 		for (Field f : obj.getClass().getDeclaredFields()) {
 
 			if (ignoreCheck(f)) continue;
@@ -113,12 +151,10 @@ public class XmlFormat implements ConfigFormat {
 			f.setAccessible(true);
 			Object raw = f.get(obj);
 
-			// 3) Unwrap any ConfigValue<?> wrapper
 			if (raw instanceof ConfigValue<?> cv) {
 				raw = cv.get();
 			}
 
-			// 4) Emit @Comment if present
 			Comment comment = f.getAnnotation(Comment.class);
 			if (comment != null && raw != null) {
 				for (String line : comment.value()) {
@@ -130,13 +166,11 @@ public class XmlFormat implements ConfigFormat {
 
 			String key = f.getName().toLowerCase();
 
-			// 5) Nested container? recurse and let it write its own open+close
 			if (raw != null && raw.getClass().isAnnotationPresent(Config.class)) {
 				writeXmlElement(raw, w, indent + 1, key);
 				continue;
 			}
 
-			// 6) Null => empty element
 			if (raw == null) {
 				indent(w, indent + 1);
 				w.write("<" + key + "/>");
@@ -144,7 +178,6 @@ public class XmlFormat implements ConfigFormat {
 				continue;
 			}
 
-			// 7) Collection => <key>…</key> with <item> children
 			if (raw instanceof Collection<?> coll) {
 				indent(w, indent + 1);
 				w.write("<" + key + ">");
@@ -160,7 +193,6 @@ public class XmlFormat implements ConfigFormat {
 				continue;
 			}
 
-			// 8) Scalar or enum or Class<?> => simple text element
 			indent(w, indent + 1);
 			w.write("<" + key + ">" + escapeXml(raw.toString()) + "</" + key + ">");
 			w.newLine();

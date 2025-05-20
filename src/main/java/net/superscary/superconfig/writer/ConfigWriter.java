@@ -9,6 +9,10 @@ import java.io.IOException;
  * This interface is used by {@link net.superscary.superconfig.manager.ConfigManager} to write
  * config objects to a file. Implementations of this interface should be stateless and thread-safe.
  * </p>
+ * <p>
+ * The interface provides a single method that handles the actual writing of the config object
+ * to a file, including proper indentation and formatting.
+ * </p>
  *
  * @param <T> the type of the config object
  * @author SuperScary
@@ -22,6 +26,12 @@ public interface ConfigWriter<T> {
 
 	/**
 	 * Writes the given object to the given writer.
+	 * <p>
+	 * This method should handle the serialization of the config object to the appropriate
+	 * format, including proper indentation and any necessary formatting. The indent parameter
+	 * specifies the current indentation level, which should be used to properly format
+	 * nested objects.
+	 * </p>
 	 *
 	 * @param obj    the object to write
 	 * @param w      the writer to write to
@@ -29,6 +39,6 @@ public interface ConfigWriter<T> {
 	 * @throws IOException            if an I/O error occurs
 	 * @throws IllegalAccessException if the object is not accessible
 	 */
-	void writeObject (T obj, BufferedWriter w, int indent) throws IOException, IllegalAccessException;
+	void writeObject(T obj, BufferedWriter w, int indent) throws IOException, IllegalAccessException;
 
 }

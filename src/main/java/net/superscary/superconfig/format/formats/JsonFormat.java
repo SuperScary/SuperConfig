@@ -18,7 +18,8 @@ import java.util.Iterator;
  * JSON config format using Jackson.
  * <p>
  * This format uses the Jackson library to read and write JSON files. It supports comments and
- * other JSON5-style extensions.
+ * other JSON5-style extensions. The format is configured to be case-insensitive for properties
+ * and enums, and to ignore unknown properties.
  * </p>
  *
  * @author SuperScary
@@ -31,50 +32,99 @@ public class JsonFormat implements ConfigFormat {
 
 	/**
 	 * The default JSON mapper. This is used to read and write JSON files.
+	 * <p>
+	 * The mapper is configured with the following settings:
+	 * - Indented output for better readability
+	 * - Case-insensitive property matching
+	 * - Case-insensitive enum matching
+	 * - Ignore unknown properties
+	 * </p>
 	 */
 	private final ObjectMapper mapper;
 
-	public JsonFormat () {
+	/**
+	 * Creates a new JsonFormat with default settings.
+	 * <p>
+	 * The ObjectMapper is configured with standard settings for JSON processing,
+	 * including support for comments and other JSON5 features.
+	 * </p>
+	 */
+	public JsonFormat() {
 		JsonFactory factory = JsonFactory.builder().build();
 
 		this.mapper = new ObjectMapper(factory)
 				.enable(SerializationFeature.INDENT_OUTPUT)
 				.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
-				.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS,     true)
+				.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true)
 				.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 	}
 
 	/**
 	 * Returns the file extension for this format.
+	 * <p>
+	 * The extension is ".json" for JSON files.
+	 * </p>
+	 *
+	 * @return the file extension
 	 */
 	@Override
-	public String extension () {
+	public String extension() {
 		return ".json";
 	}
 
+	/**
+	 * Returns the line comment prefix for this format.
+	 * <p>
+	 * JSON comments use "// " as the prefix.
+	 * </p>
+	 *
+	 * @return the comment prefix
+	 */
 	@Override
-	public String lineCommentPrefix () {
+	public String lineCommentPrefix() {
 		return "// ";
 	}
 
 	/**
-	 * Returns the default JSON mapper. This is used to read and write JSON files.
+	 * Returns the default JSON mapper.
+	 * <p>
+	 * This mapper is used to read and write JSON files with the configured settings.
+	 * </p>
+	 *
+	 * @return the ObjectMapper instance
 	 */
 	@Override
-	public ObjectMapper getMapper () {
+	public ObjectMapper getMapper() {
 		return mapper;
 	}
 
+	/**
+	 * Reads a JSON file and returns its contents as a JsonNode.
+	 *
+	 * @param file the file to read from
+	 * @return the JsonNode representing the file contents
+	 * @throws IOException if an I/O error occurs
+	 */
 	@Override
-	public JsonNode readTree (Path file) throws IOException {
+	public JsonNode readTree(Path file) throws IOException {
 		return mapper.readTree(file.toFile());
 	}
 
 	/**
-	 * Allows writing a Java object to a JSON file.
+	 * Writes a configuration object to a JSON file.
+	 * <p>
+	 * This method handles the serialization of the config object to JSON format,
+	 * including proper indentation and formatting.
+	 * </p>
+	 *
+	 * @param file   the file to write to
+	 * @param config the config object to write
+	 * @param writer the class of the config object
+	 * @param <T>    the type of the config object
+	 * @throws IOException if an I/O error occurs
 	 */
 	@Override
-	public <T> void write (Path file, T config, Class<T> writer) throws IOException {
+	public <T> void write(Path file, T config, Class<T> writer) throws IOException {
 		try (BufferedWriter w = Files.newBufferedWriter(file,
 				StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
 			writeJsonObject(config, w, 0);
@@ -83,7 +133,7 @@ public class JsonFormat implements ConfigFormat {
 		}
 	}
 
-	private void writeJsonObject (Object obj, BufferedWriter w, int indent) throws IOException, IllegalAccessException {
+	private void writeJsonObject(Object obj, BufferedWriter w, int indent) throws IOException, IllegalAccessException {
 		indent(w, indent);
 		w.write("{");
 		w.newLine();
@@ -99,19 +149,15 @@ public class JsonFormat implements ConfigFormat {
 			String key = f.getName();
 			Object val = f.get(obj);
 
-			// 2) Key
 			indent(w, indent + 1);
 			w.write("\"" + key + "\": ");
 
-			// 3) Value
 			if (val == null) {
 				w.write("null");
 			}
-			// 3a) Nested @Config container
 			else if (f.getType().isAnnotationPresent(Config.class)) {
 				writeJsonObject(val, w, indent + 1);
 			}
-			// 3b) Collections → JSON array
 			else if (val instanceof Collection<?> coll) {
 				w.write("[");
 				if (!coll.isEmpty()) {
@@ -133,13 +179,11 @@ public class JsonFormat implements ConfigFormat {
 				}
 				w.write("]");
 			}
-			// 3c) Primitive / String / Enum
 			else {
 				String json = mapper.writeValueAsString(val);
 				w.write(json);
 			}
 
-			// 4) Comma if not last
 			if (i < fields.length - 1) {
 				w.write(",");
 			}
@@ -153,7 +197,7 @@ public class JsonFormat implements ConfigFormat {
 		}
 	}
 
-	private void indent (BufferedWriter w, int levels) throws IOException {
+	private void indent(BufferedWriter w, int levels) throws IOException {
 		for (int i = 0; i < levels; i++) {
 			w.write("    ");
 		}

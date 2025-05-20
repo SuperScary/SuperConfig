@@ -19,10 +19,8 @@ import java.util.Iterator;
 
 /**
  * JSON5 config format using Jackson.
- * <p>
  * This format uses the Jackson library to read and write JSON files. It supports comments and
  * other JSON5-style extensions.
- * </p>
  *
  * @author SuperScary
  * @see net.superscary.superconfig.manager.ConfigManager
@@ -34,10 +32,20 @@ public class Json5Format implements ConfigFormat {
 
 	/**
 	 * The default JSON5 mapper. This is used to read and write JSON files.
+	 * The mapper is configured with the following settings:
+	 * - Indented output for better readability
+	 * - Case-insensitive property matching
+	 * - Case-insensitive enum matching
+	 * - Ignore unknown properties
 	 */
 	private final ObjectMapper mapper;
 
-	public Json5Format () {
+	/**
+	 * Creates a new Json5Format instance.
+	 * This constructor initializes the JSON5 mapper with the appropriate features
+	 * and settings for JSON5-compliant JSON parsing and writing.
+	 */
+	public Json5Format() {
 		JsonFactory factory = JsonFactory.builder()
 				.enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)
 				.enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
@@ -50,41 +58,68 @@ public class Json5Format implements ConfigFormat {
 		this.mapper = new ObjectMapper(factory)
 				.enable(SerializationFeature.INDENT_OUTPUT)
 				.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
-				.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS,     true)
+				.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true)
 				.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 	}
 
 	/**
 	 * Returns the file extension for this format.
+	 * The extension is ".json5" for JSON5 files.
+	 *
+	 * @return the file extension
 	 */
 	@Override
-	public String extension () {
+	public String extension() {
 		return ".json5";
 	}
 
+	/**
+	 * Returns the line comment prefix for this format.
+	 * JSON5 comments use "// " as the prefix.
+	 *
+	 * @return the comment prefix
+	 */
 	@Override
-	public String lineCommentPrefix () {
+	public String lineCommentPrefix() {
 		return "// ";
 	}
 
 	/**
-	 * Returns the default JSON5 mapper. This is used to read and write JSON files.
+	 * Returns the default JSON5 mapper.
+	 * This mapper is used to read and write JSON5 files with the configured settings.
+	 *
+	 * @return the ObjectMapper instance
 	 */
 	@Override
-	public ObjectMapper getMapper () {
+	public ObjectMapper getMapper() {
 		return mapper;
 	}
 
+	/**
+	 * Reads a JSON5 file and returns its contents as a JsonNode.
+	 *
+	 * @param file the file to read from
+	 * @return the JsonNode representing the file contents
+	 * @throws IOException if an I/O error occurs
+	 */
 	@Override
-	public JsonNode readTree (Path file) throws IOException {
+	public JsonNode readTree(Path file) throws IOException {
 		return mapper.readTree(file.toFile());
 	}
 
 	/**
-	 * Allows writing a Java object to a JSON file.
+	 * Writes a configuration object to a JSON5 file.
+	 * This method handles the serialization of the config object to JSON5 format,
+	 * including proper indentation and formatting.
+	 *
+	 * @param file   the file to write to
+	 * @param config the config object to write
+	 * @param writer the class of the config object
+	 * @param <T>    the type of the config object
+	 * @throws IOException if an I/O error occurs
 	 */
 	@Override
-	public <T> void write (Path file, T config, Class<T> writer) throws IOException {
+	public <T> void write(Path file, T config, Class<T> writer) throws IOException {
 		try (BufferedWriter w = Files.newBufferedWriter(file,
 				StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
 			writeObject(config, w, 0);
@@ -93,7 +128,7 @@ public class Json5Format implements ConfigFormat {
 		}
 	}
 
-	private <U> U instantiate (Class<U> cls) {
+	private <U> U instantiate(Class<U> cls) {
 		try {
 			return cls.getDeclaredConstructor().newInstance();
 		} catch (ReflectiveOperationException e) {
@@ -101,7 +136,7 @@ public class Json5Format implements ConfigFormat {
 		}
 	}
 
-	private void writeObject (Object obj, BufferedWriter w, int indent) throws IOException, IllegalAccessException {
+	private void writeObject(Object obj, BufferedWriter w, int indent) throws IOException, IllegalAccessException {
 		indent(w, indent);
 		w.write("{");
 		w.newLine();
@@ -116,7 +151,6 @@ public class Json5Format implements ConfigFormat {
 
 			String key = f.getName().toLowerCase();
 
-			// 1) Comments
 			Comment comment = f.getAnnotation(Comment.class);
 			if (comment != null) {
 				for (String line : comment.value()) {
@@ -126,7 +160,6 @@ public class Json5Format implements ConfigFormat {
 				}
 			}
 
-			// 2) Nested @Config object?
 			if (f.getType().isAnnotationPresent(Config.class)) {
 				Object nested = f.get(obj);
 				if (nested == null) {
@@ -138,7 +171,6 @@ public class Json5Format implements ConfigFormat {
 				w.write(key + ": ");
 				writeObject(nested, w, indent + 1);
 			}
-			// 3) Any ConfigValue<?> (including ListValue<T>, EnumValue<E>, etc.)
 			else if (ConfigValue.class.isAssignableFrom(f.getType())) {
 				@SuppressWarnings("unchecked")
 				ConfigValue<Object> cv = (ConfigValue<Object>) f.get(obj);
@@ -148,7 +180,6 @@ public class Json5Format implements ConfigFormat {
 				w.write(key + ": ");
 
 				if (val instanceof Collection<?> coll) {
-					// ---- WRITE A JSON5 ARRAY ----
 					w.write("[");
 					if (!coll.isEmpty()) {
 						w.newLine();
@@ -158,10 +189,8 @@ public class Json5Format implements ConfigFormat {
 							indent(w, indent + 2);
 
 							if (element != null && element.getClass().isAnnotationPresent(Config.class)) {
-								// element is a nested config object
 								writeObject(element, w, indent + 2);
 							} else {
-								// primitive / enum / simple object
 								String jsonElem = mapper.writeValueAsString(element);
 								w.write(jsonElem);
 							}
@@ -173,17 +202,14 @@ public class Json5Format implements ConfigFormat {
 					}
 					w.write("]");
 				} else {
-					// ---- WRITE A PRIMITIVE / STRING / ENUM ----
 					String json = mapper.writeValueAsString(val);
 					w.write(json);
 				}
 			}
-			// 4) Skip any other fields
 			else {
 				continue;
 			}
 
-			//Comma between fields
 			if (i < fields.length - 1) w.write(",");
 			w.newLine();
 		}
@@ -196,7 +222,7 @@ public class Json5Format implements ConfigFormat {
 	/**
 	 * helper to indent
 	 */
-	private void indent (BufferedWriter w, int levels) throws IOException {
+	private void indent(BufferedWriter w, int levels) throws IOException {
 		for (int i = 0; i < levels; i++) w.write("    ");
 	}
 }
