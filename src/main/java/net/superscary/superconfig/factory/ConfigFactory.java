@@ -1,5 +1,6 @@
 package net.superscary.superconfig.factory;
 
+import net.superscary.superconfig.annotations.Config;
 import net.superscary.superconfig.format.ConfigFormat;
 import net.superscary.superconfig.format.formats.Json5Format;
 import net.superscary.superconfig.format.formats.TomlFormat;
@@ -42,7 +43,7 @@ public final class ConfigFactory {
 	 * This method provides a convenient way to load a configuration with minimal setup.
 	 * It uses the class name (lowercased) as the filename and the default format.
 	 *
-	 * @param type config class annotated with @ConfigContainer
+	 * @param type config class annotated with {@link Config}
 	 * @param <T>  type of the config
 	 * @return populated config instance
 	 * @throws IOException            if an I/O error occurs
@@ -59,7 +60,7 @@ public final class ConfigFactory {
 	 * This method allows specifying a custom file path while still using the default format.
 	 * The file extension will be automatically added if not present.
 	 *
-	 * @param type config class annotated with @ConfigContainer
+	 * @param type config class annotated with {@link Config}
 	 * @param file path to the config file
 	 * @param <T>  type of the config
 	 * @return populated config instance

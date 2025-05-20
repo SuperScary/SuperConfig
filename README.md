@@ -7,7 +7,7 @@
 > A **drop-in**, **class-based** configuration manager for Java — JSON, JSON5, YAML, TOML, and XML.
 
 SuperConfig lets you define your app’s settings as plain Java classes—no XML schemas, no boilerplate, no hand-rolled parsers.  
-Annotate with `@ConfigContainer`, use `@Comment` for inline docs, `@Ignore` to skip fields, or value–wrappers like `CharValue`.  
+Annotate with `@Config`, use `@Comment` for inline docs, `@Ignore` to skip fields, or value–wrappers like `CharValue`.  
 Under the hood each format ships its own Jackson mapper, so you get human-friendly files and zero surprises.
 
 ---
@@ -34,7 +34,7 @@ Under the hood each format ships its own Jackson mapper, so you get human-friend
 
 ## Features
 
-- **Annotation-driven** – `@ConfigContainer`, `@Comment`, `@Ignore`  
+- **Annotation-driven** – `@Config`, `@Comment`, `@Ignore`  
 - **Multi-format** – JSON, JSON5, YAML, TOML, and XML 
 - **Nested containers** – group related settings in sub-classes  
 - **Value wrappers** – `ConfigValue<T>`, `ListValue<T>`, `CharValue`, enums  
@@ -143,7 +143,7 @@ public class Main {
 ```java
 @Config(name = "app_config")
 public class AppConfig {
-    @ConfigContainer
+    @Config(name = "database")
     public static class Db {
         @Comment("JDBC URL")     
         public String url  = "jdbc:h2:mem:test";
