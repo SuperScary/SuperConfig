@@ -6,7 +6,7 @@ import net.superscary.superconfig.value.AbstractValue;
  * A wrapper for integer values in configuration.
  * This class extends {@link AbstractValue} and provides a way to store and manage
  * integer values in a configuration system.
- *
+ * <p>
  * Example usage:
  * <pre>
  * {@code
@@ -26,7 +26,7 @@ public class IntegerValue extends AbstractValue<Integer> {
 	 *
 	 * @param def the default integer value
 	 */
-	public IntegerValue(int def) {
+	public IntegerValue (int def) {
 		super(def);
 	}
 }

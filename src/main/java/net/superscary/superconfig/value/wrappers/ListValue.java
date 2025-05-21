@@ -34,14 +34,14 @@ public class ListValue<E> extends AbstractValue<List<E>> {
 	 *
 	 * @param defaultValue the default value
 	 */
-	public ListValue(List<E> defaultValue) {
+	public ListValue (List<E> defaultValue) {
 		super(defaultValue);
 	}
 
 	/**
 	 * Creates a new ListValue with no default value.
 	 */
-	public ListValue() {
+	public ListValue () {
 		super(null);
 	}
 
@@ -54,7 +54,7 @@ public class ListValue<E> extends AbstractValue<List<E>> {
 	 * @return the current list value
 	 */
 	@Override
-	public List<E> get() {
+	public List<E> get () {
 		return super.get();
 	}
 
@@ -67,7 +67,7 @@ public class ListValue<E> extends AbstractValue<List<E>> {
 	 * @param newValue the new list value
 	 */
 	@Override
-	public void set(List<E> newValue) {
+	public void set (List<E> newValue) {
 		super.set(new ArrayList<>(newValue));
 	}
 
@@ -76,7 +76,7 @@ public class ListValue<E> extends AbstractValue<List<E>> {
 	 *
 	 * @param element the element to add
 	 */
-	public void add(E element) {
+	public void add (E element) {
 		get().add(element);
 	}
 
@@ -85,14 +85,14 @@ public class ListValue<E> extends AbstractValue<List<E>> {
 	 *
 	 * @param element the element to remove
 	 */
-	public void remove(E element) {
+	public void remove (E element) {
 		get().remove(element);
 	}
 
 	/**
 	 * Removes all elements from the list.
 	 */
-	public void clear() {
+	public void clear () {
 		get().clear();
 	}
 
@@ -101,7 +101,7 @@ public class ListValue<E> extends AbstractValue<List<E>> {
 	 *
 	 * @param c the collection containing elements to add
 	 */
-	public void addAll(Collection<? extends E> c) {
+	public void addAll (Collection<? extends E> c) {
 		get().addAll(c);
 	}
 }

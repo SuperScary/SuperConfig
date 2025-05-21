@@ -11,10 +11,11 @@ import java.lang.annotation.Target;
  * written to the configuration file.
  *
  * @author SuperScary
+ * @version 2.0.0
  * @since 1.0.0
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
+@Target({ElementType.FIELD, ElementType.TYPE})
 public @interface Comment {
 	/**
 	 * Lines to emit above the property.
@@ -22,5 +23,5 @@ public @interface Comment {
 	 *
 	 * @return array of comment lines to be written above the property
 	 */
-	String[] value();
+	String[] value ();
 }

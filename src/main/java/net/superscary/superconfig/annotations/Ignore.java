@@ -21,6 +21,6 @@ import java.lang.annotation.Target;
  * @author SuperScary
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
+@Target({ElementType.FIELD, ElementType.TYPE})
 public @interface Ignore {
 }

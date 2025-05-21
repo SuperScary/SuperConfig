@@ -39,6 +39,6 @@ public interface ConfigWriter<T> {
 	 * @throws IOException            if an I/O error occurs
 	 * @throws IllegalAccessException if the object is not accessible
 	 */
-	void writeObject(T obj, BufferedWriter w, int indent) throws IOException, IllegalAccessException;
+	void writeObject (T obj, BufferedWriter w, int indent) throws IOException, IllegalAccessException;
 
 }

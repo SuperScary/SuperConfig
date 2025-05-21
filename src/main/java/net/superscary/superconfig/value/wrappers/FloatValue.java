@@ -28,14 +28,14 @@ public class FloatValue extends AbstractValue<Float> {
 	 *
 	 * @param defaultValue the default value
 	 */
-	public FloatValue(Float defaultValue) {
+	public FloatValue (Float defaultValue) {
 		super(defaultValue);
 	}
 
 	/**
 	 * Creates a new FloatValue with no default value.
 	 */
-	public FloatValue() {
+	public FloatValue () {
 		super(null);
 	}
 }

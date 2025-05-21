@@ -6,7 +6,7 @@ import net.superscary.superconfig.value.AbstractValue;
  * A wrapper for long values in configuration.
  * This class extends {@link AbstractValue} and provides a way to store and manage
  * long values in a configuration system.
- *
+ * <p>
  * Example usage:
  * <pre>
  * {@code
@@ -26,7 +26,7 @@ public class LongValue extends AbstractValue<Long> {
 	 *
 	 * @param def the default long value
 	 */
-	public LongValue(Long def) {
+	public LongValue (Long def) {
 		super(def);
 	}
 }

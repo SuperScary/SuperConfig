@@ -23,10 +23,10 @@ public class EnumValue<E extends Enum<E>> extends AbstractValue<E> {
 	/**
 	 * Creates a new EnumValue with the given enum class and default value.
 	 *
-	 * @param enumClass the class of the enum
+	 * @param enumClass    the class of the enum
 	 * @param defaultValue the default value
 	 */
-	public EnumValue(Class<E> enumClass, E defaultValue) {
+	public EnumValue (Class<E> enumClass, E defaultValue) {
 		super(defaultValue);
 		this.enumClass = enumClass;
 	}
@@ -36,7 +36,7 @@ public class EnumValue<E extends Enum<E>> extends AbstractValue<E> {
 	 *
 	 * @param enumClass the class of the enum
 	 */
-	public EnumValue(Class<E> enumClass) {
+	public EnumValue (Class<E> enumClass) {
 		super(null);
 		this.enumClass = enumClass;
 	}
@@ -51,7 +51,7 @@ public class EnumValue<E extends Enum<E>> extends AbstractValue<E> {
 	 * @param name the name of the enum constant
 	 * @throws IllegalArgumentException if no enum constant exists with the given name
 	 */
-	public void set(String name) {
+	public void set (String name) {
 		E e = Enum.valueOf(enumClass, name);
 		super.set(e);
 	}

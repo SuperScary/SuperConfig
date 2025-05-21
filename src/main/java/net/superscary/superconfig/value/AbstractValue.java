@@ -30,7 +30,7 @@ public abstract class AbstractValue<T> implements ConfigValue<T> {
 	 *
 	 * @param defaultValue the default value for this configuration value
 	 */
-	protected AbstractValue(T defaultValue) {
+	protected AbstractValue (T defaultValue) {
 		this.defaultValue = defaultValue;
 		this.value = defaultValue;
 	}
@@ -41,7 +41,7 @@ public abstract class AbstractValue<T> implements ConfigValue<T> {
 	 * @return the current value
 	 */
 	@Override
-	public T get() {
+	public T get () {
 		return value;
 	}
 
@@ -51,7 +51,7 @@ public abstract class AbstractValue<T> implements ConfigValue<T> {
 	 * @return the default value
 	 */
 	@Override
-	public T getDefault() {
+	public T getDefault () {
 		return defaultValue;
 	}
 
@@ -61,7 +61,7 @@ public abstract class AbstractValue<T> implements ConfigValue<T> {
 	 * @param v the new value to set
 	 */
 	@Override
-	public void set(T v) {
+	public void set (T v) {
 		this.value = v;
 	}
 

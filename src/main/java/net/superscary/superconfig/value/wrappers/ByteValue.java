@@ -7,7 +7,7 @@ import net.superscary.superconfig.value.AbstractValue;
  * This class extends {@link AbstractValue} and provides a way to store and manage
  * byte values in a configuration system. It is particularly useful for storing
  * small integer values that need to be constrained to the byte range (-128 to 127).
- *
+ * <p>
  * Example usage:
  * <pre>
  * {@code
@@ -28,7 +28,7 @@ public class ByteValue extends AbstractValue<Byte> {
 	 *
 	 * @param def the default byte value
 	 */
-	public ByteValue(Byte def) {
+	public ByteValue (Byte def) {
 		super(def);
 	}
 }

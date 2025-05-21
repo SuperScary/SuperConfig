@@ -6,7 +6,7 @@ import net.superscary.superconfig.value.AbstractValue;
  * A wrapper for short values in configuration.
  * This class extends {@link AbstractValue} and provides a way to store and manage
  * short values in a configuration system.
- *
+ * <p>
  * Example usage:
  * <pre>
  * {@code
@@ -26,7 +26,7 @@ public class ShortValue extends AbstractValue<Short> {
 	 *
 	 * @param def the default short value
 	 */
-	public ShortValue(Short def) {
+	public ShortValue (Short def) {
 		super(def);
 	}
 }

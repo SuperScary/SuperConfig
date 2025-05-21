@@ -6,7 +6,7 @@ import net.superscary.superconfig.value.AbstractValue;
  * A wrapper for character values in configuration.
  * This class extends {@link AbstractValue} and provides a way to store and manage
  * character values in a configuration system.
- *
+ * <p>
  * Example usage:
  * <pre>
  * {@code
@@ -27,7 +27,7 @@ public class CharValue extends AbstractValue<Character> {
 	 *
 	 * @param def the default character value
 	 */
-	public CharValue(char def) {
+	public CharValue (char def) {
 		super(def);
 	}
 

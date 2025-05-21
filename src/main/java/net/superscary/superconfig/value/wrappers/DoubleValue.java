@@ -6,7 +6,7 @@ import net.superscary.superconfig.value.AbstractValue;
  * A wrapper for double values in configuration.
  * This class extends {@link AbstractValue} and provides a way to store and manage
  * double values in a configuration system.
- *
+ * <p>
  * Example usage:
  * <pre>
  * {@code
@@ -26,7 +26,7 @@ public class DoubleValue extends AbstractValue<Double> {
 	 *
 	 * @param def the default double value
 	 */
-	public DoubleValue(Double def) {
+	public DoubleValue (Double def) {
 		super(def);
 	}
 }
