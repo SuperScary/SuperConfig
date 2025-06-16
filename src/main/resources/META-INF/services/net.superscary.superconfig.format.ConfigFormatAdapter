@@ -3,3 +3,4 @@ net.superscary.superconfig.format.formats.Json5FormatAdapter
 net.superscary.superconfig.format.formats.TomlFormatAdapter
 net.superscary.superconfig.format.formats.YamlFormatAdapter
 net.superscary.superconfig.format.formats.XmlFormatAdapter
+net.superscary.superconfig.format.formats.KdlFormatAdapter

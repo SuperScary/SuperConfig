@@ -49,7 +49,7 @@ Under the hood each format ships its own Jackson mapper, so you get human-friend
 ### Prerequisites
 
 - Java 8+  
-- Jackson Core & Databind (for JSON, YAML, TOML, XML)  
+- Jackson Core & Databind (for JSON, YAML, TOML, XML, & KDL)  
 
 ### Installation
 
@@ -81,8 +81,9 @@ dependencies {
 import net.superscary.superconfig.annotations.*;
 import net.superscary.superconfig.value.wrappers.BooleanValue;
 import net.superscary.superconfig.value.wrappers.IntegerValue;
+import net.superscary.superconfig.format.ConfigFormatType;
 
-@Config(name = "server_config")
+@Config(value = "server_config", path = "configs", format = ConfigFormatType.KDL)
 public class ServerConfig {
   @Comment("Server port")
   public IntegerValue port = new IntegerValue(8080);
@@ -106,25 +107,8 @@ import net.superscary.superconfig.format.formats.*;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        // JSON (default)
-        var jsonMgr = ConfigManager
-            .builder(ServerConfig.class)
-            .file(Paths.get("config/server"))   // → server.json
-            .build();
-        
-        // YAML
-        var yamlMgr = ConfigManager
-            .builder(ServerConfig.class)
-            .file(Paths.get("config/server"))   // → server.yml
-            .format(new YamlFormat())
-            .build();
-        
-        // TOML or XML similarly:
-        // .format(new TomlFormat()), new XmlFormat(), etc.
-
-        ServerConfig cfg = yamlMgr.load();    // loads defaults + merges existing
-        cfg.verbose.set(true);
-        yamlMgr.save(cfg);                    // writes server.yml with comments
+      var factory = new ConfigFactory();
+      var config = factory.load( Config.class);
     }
 }
 ```
@@ -141,7 +125,9 @@ public class Main {
 ### Nested Containers
 
 ```java
-@Config(name = "app_config")
+import net.superscary.superconfig.format.ConfigFormatType;
+
+@Config(value = "server_config", path = "configs", format = ConfigFormatType.KDL)
 public class AppConfig {
     @Config(name = "database")
     public static class Db {
@@ -189,19 +175,6 @@ public final class ConfigManager<T> {
     public Builder<T> format(ConfigFormat fmt);    // default = JSON
     public ConfigManager<T> build();
   }
-}
-```
-
-### `ConfigFormat`
-
-```java
-public interface ConfigFormat {
-  JsonNode readTree(Path file) throws IOException;
-  <T> void write(Path file, T config, Class<T> type)
-      throws IOException, IllegalAccessException;
-  ObjectMapper getMapper();
-  String extension();
-  String commentPrefix();
 }
 ```
 

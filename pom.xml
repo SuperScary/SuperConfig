@@ -6,7 +6,7 @@
 
     <groupId>net.superscary</groupId>
     <artifactId>SuperConfig</artifactId>
-    <version>1.1.2</version>
+    <version>1.1.3</version>
 
     <description>A drop-in config manager for any Java project.</description>
     <url>https://github.com/SuperScary/SuperConfig</url>

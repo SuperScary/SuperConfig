@@ -52,7 +52,7 @@ public class Json5FormatAdapter extends AbstractConfigFormatAdapter {
 
 	@Override
 	public String extension () {
-		return ConfigFormatType.JSON5.getExtension();
+		return ConfigFormatType.JSON5.getFileExtension();
 	}
 
 	@Override

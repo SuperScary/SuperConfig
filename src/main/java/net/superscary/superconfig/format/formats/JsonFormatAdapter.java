@@ -48,7 +48,7 @@ public class JsonFormatAdapter extends AbstractConfigFormatAdapter {
 
 	@Override
 	public String extension () {
-		return ConfigFormatType.JSON.getExtension();
+		return ConfigFormatType.JSON.getFileExtension();
 	}
 
 	@Override

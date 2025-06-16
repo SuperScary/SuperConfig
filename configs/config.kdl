@@ -1,0 +1,19 @@
+/- kdl-version 2
+
+InnerConfig {
+    // This is a test string
+    testString "test"
+    // This is a test boolean
+    testBoolean #true
+}
+// This is a test string
+testString "test"
+// This is a test boolean
+testBoolean #true
+// This is a test inner config2
+innerConfig2 {
+    // This is a test string
+    testString "test"
+    // This is a test boolean
+    testBoolean #true
+}

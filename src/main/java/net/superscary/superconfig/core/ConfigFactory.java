@@ -9,6 +9,7 @@ import net.superscary.superconfig.format.formats.Json5FormatAdapter;
 import net.superscary.superconfig.format.formats.TomlFormatAdapter;
 import net.superscary.superconfig.format.formats.XmlFormatAdapter;
 import net.superscary.superconfig.format.formats.YamlFormatAdapter;
+import net.superscary.superconfig.format.formats.KdlFormatAdapter;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -49,6 +50,7 @@ public class ConfigFactory {
 		adapters.put(ConfigFormatType.TOML.getFileExtension(), new TomlFormatAdapter());
 		adapters.put(ConfigFormatType.YAML.getFileExtension(), new YamlFormatAdapter());
 		adapters.put(ConfigFormatType.XML.getFileExtension(), new XmlFormatAdapter());
+		adapters.put(ConfigFormatType.KDL.getFileExtension(), new KdlFormatAdapter());
 
 		// Load additional adapters from ServiceLoader
 		ServiceLoader<ConfigFormatAdapter> loader = ServiceLoader.load(ConfigFormatAdapter.class);
@@ -114,7 +116,7 @@ public class ConfigFactory {
 
 		// Build the path
 		Path basePath = config.path().isEmpty() ? Path.of("") : Path.of(config.path());
-		return basePath.resolve(name + extension);
+		return basePath.resolve(name + "." + extension);
 	}
 
 	/**

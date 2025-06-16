@@ -22,6 +22,7 @@ public class ConfigFormatFactory {
 			case TOML -> new TomlFormatAdapter();
 			case YAML -> new YamlFormatAdapter();
 			case XML -> new XmlFormatAdapter();
+			case KDL -> new KdlFormatAdapter();
 		};
 	}
 } 

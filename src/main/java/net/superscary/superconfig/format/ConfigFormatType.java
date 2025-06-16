@@ -11,12 +11,13 @@ public enum ConfigFormatType {
 	JSON5("json5"),
 	YAML("yml"),
 	TOML("toml"),
-	XML("xml");
+	XML("xml"),
+	KDL("kdl");
 
-	private final String extension;
+	private final String fileExtension;
 
-	ConfigFormatType (String extension) {
-		this.extension = extension;
+	ConfigFormatType (String fileExtension) {
+		this.fileExtension = fileExtension;
 	}
 
 	/**
@@ -24,17 +25,8 @@ public enum ConfigFormatType {
 	 *
 	 * @return the file extension
 	 */
-	public String getExtension () {
-		return extension;
-	}
-
-	/**
-	 * Gets the file extension with a dot prefix.
-	 *
-	 * @return the file extension with a dot prefix
-	 */
 	public String getFileExtension () {
-		return "." + extension;
+		return fileExtension;
 	}
 
 	/**
@@ -47,7 +39,7 @@ public enum ConfigFormatType {
 		// Remove dot prefix if present
 		String ext = extension.startsWith(".") ? extension.substring(1) : extension;
 		for (ConfigFormatType type : values()) {
-			if (type.extension.equals(ext)) {
+			if (type.fileExtension.equals(ext)) {
 				return type;
 			}
 		}

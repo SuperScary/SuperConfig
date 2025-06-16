@@ -51,7 +51,7 @@ public class TomlFormatAdapter extends AbstractConfigFormatAdapter {
 
 	@Override
 	public String extension () {
-		return "." + ConfigFormatType.TOML.getExtension();
+		return "." + ConfigFormatType.TOML.getFileExtension();
 	}
 
 	@Override

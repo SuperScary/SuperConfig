@@ -3,7 +3,7 @@ package net.superscary.superconfig.v0;
 import net.superscary.superconfig.annotations.Comment;
 import net.superscary.superconfig.format.ConfigFormatType;
 
-@net.superscary.superconfig.annotations.Config(path = "configs", format = ConfigFormatType.TOML)
+@net.superscary.superconfig.annotations.Config(path = "configs", format = ConfigFormatType.KDL)
 public class Config {
     @Comment("This is a test string")
     public String testString = "test";
